@@ -1,11 +1,10 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 function Drop() {
 
 
     const [imagedata, setImagedata] = useState("");
     const [error, setError] = useState(false);
-    const inputRef = React.useRef(null);
 
 
     const handleDrop = function (e) {
@@ -13,21 +12,21 @@ function Drop() {
         e.stopPropagation();
         // console.log(e.dataTransfer.files[0].name)
         var allowedExtensions = /(\.jpg|\.jpeg|\.png)$/i;
-        if (allowedExtensions.exec(e.dataTransfer.files[0].name)) {
-            if (e.dataTransfer.types == "Files") {
-                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                    var files = e.dataTransfer.files;
-                    if (files.length) {
-                        var file = files[0];
-                        var reader = new FileReader();
-                        reader.onload = function () {
-                            const img = reader.result;
-                            setImagedata(img)
-                        };
-                        reader.readAsDataURL(file);
-                    }
+        if (e.dataTransfer.types == "Files" && allowedExtensions.exec(e.dataTransfer.files[0].name)) {
+            // if (allowedExtensions.exec(e.dataTransfer.files[0].name)) {
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                var files = e.dataTransfer.files;
+                if (files.length) {
+                    var file = files[0];
+                    var reader = new FileReader();
+                    reader.onload = function () {
+                        const img = reader.result;
+                        setImagedata(img)
+                    };
+                    reader.readAsDataURL(file);
                 }
             }
+            // }
         } else setError(true)
     };
 
@@ -68,23 +67,26 @@ function Drop() {
         }
 
     };
+    useEffect(() => {
+        window.addEventListener('dragenter', (e) => {
+            dragenterDragleave(e);
+        });
 
-    window.addEventListener('dragenter', (e) => {
-        dragenterDragleave(e);
-    });
+        window.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
 
-    window.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-    });
+        window.addEventListener('dragleave', (e) => {
+            dragenterDragleave(e)
+        });
 
-    window.addEventListener('dragleave', (e) => {
-        dragenterDragleave(e)
-    });
-    window.addEventListener('drop', (e) => {
-        dragenterDragleave(e);
-        handleDrop(e)
-    });
+        window.addEventListener('drop', (e) => {
+            dragenterDragleave(e);
+            handleDrop(e)
+        });
+    }, [])
+
 
     return (
         <>
@@ -96,7 +98,7 @@ function Drop() {
                     <form id="form-file-upload" onSubmit={(e) => e.preventDefault()}>
                         <div id="label-file-upload" >
                             <div>
-                                <input ref={inputRef} type="file" id="input-file-upload" multiple={true} onChange={handleChange} accept='.jpeg, .jpg, .png'/>
+                                <input type="file" id="input-file-upload" multiple={true} onChange={handleChange} accept='.jpeg, .jpg, .png' />
                                 <p>Drag and drop your file here or</p>
                                 <label htmlFor="input-file-upload" className="upload-button" >Upload a file</label>
                             </div>
@@ -105,10 +107,13 @@ function Drop() {
                 </div>
                 <div className='img-preview'>
                     <img src={imagedata} alt="" />
-                    {
-                        error && alert("File format is not supported Background Remove")
-                    }
-                    
+                    {error && (
+                        <>
+                            {alert("File format is not supported Background Remove")}
+                            {setError(false)}
+                            {setImagedata("")}
+                        </>
+                    )}
                 </div>
             </div>
         </>
